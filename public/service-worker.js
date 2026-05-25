@@ -1,4 +1,4 @@
-const CACHE_NAME = "fiken-addon-v1";
+const CACHE_NAME = "fiken-addon-v2";
 const APP_SHELL = [
 	"/",
 	"/index.html",
@@ -31,6 +31,14 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
 	if (event.request.method !== "GET") {
+		return;
+	}
+
+	const requestUrl = new URL(event.request.url);
+	const path = requestUrl.pathname;
+
+	// OAuth and API traffic must bypass cache so redirects and session state stay correct.
+	if (path.startsWith("/auth/") || path.startsWith("/api/")) {
 		return;
 	}
 
