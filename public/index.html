@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="no">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Fiken Timeoversikt</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<main class="container">
+			<header class="topbar">
+				<div>
+					<p class="eyebrow">Fiken API</p>
+					<h1>Konsulentinntekt</h1>
+					<p class="subtitle">Inneværende periode med sammenligning mot forrige periode.</p>
+				</div>
+				<div class="actions">
+					<a id="login-link" class="button button-secondary" href="/auth/login">Koble til Fiken</a>
+					<a id="logout-link" class="button button-ghost" href="/auth/logout">Logg ut</a>
+				</div>
+			</header>
+
+			<section class="controls card">
+				<div class="field">
+					<label for="company-select">Foretak</label>
+					<select id="company-select"></select>
+				</div>
+				<div class="field">
+					<label>Filter</label>
+					<div class="segment">
+						<button class="segment-button is-active" data-period="week">Uke</button>
+						<button class="segment-button" data-period="month">Måned</button>
+						<button class="segment-button" data-period="year">År</button>
+					</div>
+				</div>
+				<button id="refresh-btn" class="button button-primary">Oppdater</button>
+			</section>
+
+			<section class="card total-card">
+				<p id="period-label" class="period-label">Inneværende uke</p>
+				<p id="range-label" class="range-label"></p>
+				<p class="total-hours"><span id="total-current">0 kr</span></p>
+				<p class="previous-small"><span id="previous-label">Forrige uke</span>: <span id="total-previous">0 kr</span></p>
+			</section>
+
+			<section id="loading" class="loading" aria-live="polite" aria-busy="true">
+				<span class="spinner" aria-hidden="true"></span>
+				<span>Henter data fra Fiken...</span>
+			</section>
+
+			<section id="message" class="message"></section>
+
+			<section class="card chart-card">
+				<div class="chart-head">
+					<h2>Inntekt per ansatt</h2>
+					<p id="chart-subtitle">Viser valgt periode over tid</p>
+				</div>
+				<div class="chart-wrap">
+					<canvas id="trend-chart" aria-label="Inntektsgraf per ansatt" role="img"></canvas>
+				</div>
+			</section>
+
+			<section id="cards" class="cards"></section>
+		</main>
+
+		<template id="consultant-template">
+			<article class="card consultant-card">
+				<h3 class="consultant-name"></h3>
+				<p class="hours-main"><span class="current-income"></span></p>
+				<p class="previous-small"><span class="previous-label-item"></span>: <span class="previous-income"></span></p>
+			</article>
+		</template>
+
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+		<script src="app.js" defer></script>
+	</body>
+</html>

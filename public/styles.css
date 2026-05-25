@@ -1,0 +1,325 @@
+:root {
+	--bg-main: #f3f4f8;
+	--bg-card: #ffffff;
+	--ink-strong: #20243a;
+	--ink-soft: #6b7087;
+	--line: #e3e5ef;
+	--accent: #5a3fd6;
+	--accent-pressed: #472fc0;
+	--warning: #a65a2d;
+	--radius-lg: 12px;
+	--radius-md: 10px;
+	--shadow: 0 2px 8px rgba(33, 36, 60, 0.06);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	font-family: "Plus Jakarta Sans", sans-serif;
+	color: var(--ink-strong);
+	background: var(--bg-main);
+	overflow-x: hidden;
+}
+
+.container {
+	width: min(1080px, calc(100% - 2rem));
+	margin: 1.5rem auto 2rem;
+}
+
+.topbar {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 0.85rem;
+}
+
+.eyebrow {
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: var(--ink-soft);
+	margin: 0 0 0.15rem;
+}
+
+h1 {
+	margin: 0 0 0.2rem;
+	font-size: clamp(1.5rem, 2.1vw, 2rem);
+	line-height: 1.15;
+}
+
+.subtitle {
+	color: var(--ink-soft);
+	font-size: 0.95rem;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.actions {
+	display: flex;
+	gap: 0.6rem;
+}
+
+.card {
+	background: var(--bg-card);
+	border: 1px solid var(--line);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow);
+}
+
+.controls {
+	display: grid;
+	grid-template-columns: 1fr 1.25fr auto;
+	gap: 0.9rem;
+	padding: 0.9rem;
+	align-items: end;
+}
+
+.field {
+	display: grid;
+	gap: 0.35rem;
+}
+
+label {
+	font-size: 0.81rem;
+	font-weight: 600;
+	color: var(--ink-soft);
+}
+
+select,
+button {
+	font: inherit;
+}
+
+select {
+	border: 1px solid var(--line);
+	background: #ffffff;
+	border-radius: 8px;
+	padding: 0.6rem 0.72rem;
+	color: var(--ink-strong);
+}
+
+.segment {
+	display: inline-flex;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.segment-button {
+	border: none;
+	background: #f6f7fb;
+	color: var(--ink-soft);
+	padding: 0.6rem 0.8rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background-color 0.2s ease, color 0.2s ease;
+	min-width: 8.3rem;
+}
+
+.segment-button.is-active {
+	color: #fff;
+	background: var(--accent);
+}
+
+.button {
+	text-decoration: none;
+	border-radius: 8px;
+	border: 1px solid transparent;
+	font-weight: 600;
+	padding: 0.6rem 0.9rem;
+	cursor: pointer;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.button-primary {
+	background: var(--accent);
+	color: white;
+}
+
+.button-primary:hover {
+	background: var(--accent-pressed);
+}
+
+.button-secondary {
+	background: #fff;
+	color: var(--ink-strong);
+	border-color: var(--line);
+}
+
+.button-ghost {
+	background: transparent;
+	color: var(--ink-soft);
+	border-color: var(--line);
+}
+
+.total-card {
+	margin-top: 1rem;
+	padding: 1rem;
+}
+
+.period-label {
+	margin: 0;
+	font-weight: 700;
+	font-size: 0.95rem;
+}
+
+.range-label {
+	margin: 0.2rem 0 0;
+	color: var(--ink-soft);
+	font-size: 0.84rem;
+}
+
+.total-hours {
+	font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+	margin: 0.5rem 0 0;
+	font-weight: 800;
+}
+
+.previous-small {
+	margin: 0.15rem 0 0;
+	font-size: 0.79rem;
+	color: var(--ink-soft);
+}
+
+.loading {
+	margin-top: 1rem;
+	padding: 0.75rem 0.9rem;
+	border: 1px solid var(--line);
+	background: #ffffff;
+	border-radius: var(--radius-md);
+	display: none;
+	align-items: center;
+	gap: 0.55rem;
+	color: var(--ink-soft);
+	font-size: 0.88rem;
+}
+
+.loading.visible {
+	display: inline-flex;
+}
+
+.spinner {
+	width: 16px;
+	height: 16px;
+	border-radius: 999px;
+	border: 2px solid #d9dcf0;
+	border-top-color: var(--accent);
+	animation: spin 0.75s linear infinite;
+}
+
+.message {
+	margin-top: 1rem;
+	padding: 0.75rem 0.9rem;
+	border-radius: var(--radius-md);
+	display: none;
+}
+
+.message.visible {
+	display: block;
+}
+
+.message.error {
+	border: 1px solid rgba(152, 89, 46, 0.25);
+	background: rgba(255, 238, 220, 0.75);
+	color: var(--warning);
+}
+
+.chart-card {
+	margin-top: 1rem;
+	padding: 1rem;
+}
+
+.chart-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 0.75rem;
+	margin-bottom: 0.6rem;
+}
+
+.chart-head h2 {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+#chart-subtitle {
+	margin: 0;
+	font-size: 0.8rem;
+	color: var(--ink-soft);
+}
+
+.chart-wrap {
+	position: relative;
+	min-height: 320px;
+}
+
+.cards {
+	margin-top: 1rem;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+	gap: 0.8rem;
+}
+
+.consultant-card {
+	padding: 0.9rem;
+	opacity: 0;
+	transform: translateY(8px);
+	animation: reveal 0.28s ease forwards;
+}
+
+.consultant-name {
+	margin: 0;
+	font-size: 0.98rem;
+	font-weight: 700;
+}
+
+.hours-main {
+	margin: 0.45rem 0 0;
+	font-size: 1.5rem;
+	font-weight: 800;
+}
+
+@keyframes reveal {
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (max-width: 880px) {
+	.controls {
+		grid-template-columns: 1fr;
+	}
+
+	.actions {
+		width: 100%;
+		justify-content: flex-start;
+	}
+
+	.button {
+		flex: 1 1 auto;
+		text-align: center;
+	}
+
+	.chart-head {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.chart-wrap {
+		min-height: 260px;
+	}
+}
