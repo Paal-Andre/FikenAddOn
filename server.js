@@ -22,6 +22,7 @@ const ACCESS_TOKEN_ENV = process.env.FIKEN_ACCESS_TOKEN;
 
 const TOKEN_FILE = path.join(__dirname, ".fiken-tokens.json");
 const oauthStateStore = new Map();
+const SESSION_COOKIE_NAME = "fiken_session";
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -109,6 +110,70 @@ async function writeTokens(tokens) {
 	await fs.writeFile(TOKEN_FILE, JSON.stringify(tokens, null, 2), "utf8");
 }
 
+function parseCookies(req) {
+	const raw = req.headers.cookie || "";
+	const cookies = {};
+	for (const part of raw.split(";")) {
+		const trimmed = part.trim();
+		if (!trimmed) {
+			continue;
+		}
+		const eqIndex = trimmed.indexOf("=");
+		if (eqIndex === -1) {
+			continue;
+		}
+		const key = trimmed.slice(0, eqIndex).trim();
+		const value = decodeURIComponent(trimmed.slice(eqIndex + 1).trim());
+		cookies[key] = value;
+	}
+	return cookies;
+}
+
+function setSessionCookie(res, sessionId) {
+	const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+	res.setHeader("Set-Cookie", `${SESSION_COOKIE_NAME}=${encodeURIComponent(sessionId)}; Path=/; HttpOnly; SameSite=Lax${secure}`);
+}
+
+function getOrCreateSessionId(req, res) {
+	const cookies = parseCookies(req);
+	const existing = cookies[SESSION_COOKIE_NAME];
+	if (existing) {
+		return existing;
+	}
+
+	const created = crypto.randomUUID();
+	setSessionCookie(res, created);
+	return created;
+}
+
+async function readTokenStore() {
+	const stored = await readTokens();
+	if (!stored || typeof stored !== "object" || Array.isArray(stored)) {
+		return {};
+	}
+	return stored;
+}
+
+async function readSessionTokens(sessionId) {
+	const store = await readTokenStore();
+	return store[sessionId] || null;
+}
+
+async function writeSessionTokens(sessionId, tokenPayload) {
+	const store = await readTokenStore();
+	store[sessionId] = tokenPayload;
+	await writeTokens(store);
+}
+
+async function deleteSessionTokens(sessionId) {
+	const store = await readTokenStore();
+	if (!store[sessionId]) {
+		return;
+	}
+	delete store[sessionId];
+	await writeTokens(store);
+}
+
 function isExpired(tokens) {
 	if (!tokens || !tokens.accessToken || !tokens.receivedAt || !tokens.expiresIn) {
 		return true;
@@ -149,16 +214,19 @@ async function refreshAccessToken(tokens) {
 		receivedAt: new Date().toISOString(),
 	};
 
-	await writeTokens(refreshed);
-	return refreshed.accessToken;
+	return refreshed;
 }
 
-async function getValidAccessToken() {
+async function getValidAccessToken(sessionId) {
 	if (ACCESS_TOKEN_ENV) {
 		return ACCESS_TOKEN_ENV;
 	}
 
-	const tokens = await readTokens();
+	if (!sessionId) {
+		return null;
+	}
+
+	const tokens = await readSessionTokens(sessionId);
 	if (!tokens) {
 		return null;
 	}
@@ -167,7 +235,9 @@ async function getValidAccessToken() {
 		return tokens.accessToken;
 	}
 
-	return refreshAccessToken(tokens);
+	const refreshedTokens = await refreshAccessToken(tokens);
+	await writeSessionTokens(sessionId, refreshedTokens);
+	return refreshedTokens.accessToken;
 }
 
 async function fikenGet(apiPathWithQuery, accessToken) {
@@ -362,8 +432,8 @@ function buildTrendSeries(entries, period, usersById, visibleUserIds) {
 	};
 }
 
-async function buildSummary(period, requestedCompanySlug) {
-	const accessToken = await getValidAccessToken();
+async function buildSummary(period, requestedCompanySlug, sessionId) {
+	const accessToken = await getValidAccessToken(sessionId);
 	if (!accessToken) {
 		return { unauthorized: true };
 	}
@@ -449,8 +519,13 @@ app.get("/auth/login", (req, res) => {
 		return;
 	}
 
+	const sessionId = getOrCreateSessionId(req, res);
+
 	const state = crypto.randomUUID();
-	oauthStateStore.set(state, Date.now());
+	oauthStateStore.set(state, {
+		createdAt: Date.now(),
+		sessionId,
+	});
 
 	const params = new URLSearchParams({
 		response_type: "code",
@@ -475,7 +550,19 @@ app.get("/auth/callback", async (req, res) => {
 		return;
 	}
 
+	const stateInfo = oauthStateStore.get(state);
 	oauthStateStore.delete(state);
+	const sessionId = stateInfo?.sessionId;
+	if (!sessionId) {
+		res.status(400).send("Ugyldig OAuth state/session.");
+		return;
+	}
+	setSessionCookie(res, sessionId);
+
+	if (!CLIENT_ID || !CLIENT_SECRET) {
+		res.status(400).send("Mangler FIKEN_CLIENT_ID/FIKEN_CLIENT_SECRET i .env.");
+		return;
+	}
 
 	try {
 		const body = new URLSearchParams({
@@ -501,7 +588,7 @@ app.get("/auth/callback", async (req, res) => {
 			receivedAt: new Date().toISOString(),
 		};
 
-		await writeTokens(tokenPayload);
+		await writeSessionTokens(sessionId, tokenPayload);
 		res.redirect("/");
 	} catch (err) {
 		res.status(500).send(`Kunne ikke hente access token: ${err.response?.data?.error_description || err.message}`);
@@ -509,16 +596,16 @@ app.get("/auth/callback", async (req, res) => {
 });
 
 app.get("/auth/logout", async (req, res) => {
-	try {
-		await fs.unlink(TOKEN_FILE);
-	} catch {
-		// Ignorer hvis fil ikke finnes.
+	const sessionId = parseCookies(req)[SESSION_COOKIE_NAME];
+	if (sessionId) {
+		await deleteSessionTokens(sessionId);
 	}
 	res.redirect("/");
 });
 
 app.get("/api/status", async (req, res) => {
-	const accessToken = await getValidAccessToken();
+	const sessionId = getOrCreateSessionId(req, res);
+	const accessToken = await getValidAccessToken(sessionId);
 	res.json({
 		authorized: Boolean(accessToken),
 		hasConfiguredOAuthClient: Boolean(CLIENT_ID && CLIENT_SECRET),
@@ -528,7 +615,8 @@ app.get("/api/status", async (req, res) => {
 
 app.get("/api/companies", async (req, res) => {
 	try {
-		const accessToken = await getValidAccessToken();
+		const sessionId = getOrCreateSessionId(req, res);
+		const accessToken = await getValidAccessToken(sessionId);
 		if (!accessToken) {
 			res.status(401).json({ error: "Ikke autentisert. Gå til /auth/login først." });
 			return;
@@ -548,9 +636,10 @@ app.get("/api/summary", async (req, res) => {
 	const requestedPeriod = String(req.query.period || "week");
 	const period = ["week", "month", "year"].includes(requestedPeriod) ? requestedPeriod : "week";
 	const companySlug = req.query.companySlug ? String(req.query.companySlug) : undefined;
+	const sessionId = getOrCreateSessionId(req, res);
 
 	try {
-		const summary = await buildSummary(period, companySlug);
+		const summary = await buildSummary(period, companySlug, sessionId);
 
 		if (summary.unauthorized) {
 			res.status(401).json({
