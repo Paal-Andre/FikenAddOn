@@ -16,7 +16,7 @@ const FIKEN_OAUTH_TOKEN_URL = "https://fiken.no/oauth/token";
 
 const CLIENT_ID = process.env.FIKEN_CLIENT_ID;
 const CLIENT_SECRET = process.env.FIKEN_CLIENT_SECRET;
-const REDIRECT_URI = process.env.FIKEN_REDIRECT_URI || `http://localhost:${PORT}/auth/callback`;
+const REDIRECT_URI = "https://fikenaddon-cjfeb8bha4b5abfy.norwayeast-01.azurewebsites.net/auth/callback";
 const COMPANY_SLUG_ENV = process.env.FIKEN_COMPANY_SLUG;
 const ACCESS_TOKEN_ENV = process.env.FIKEN_ACCESS_TOKEN;
 
@@ -25,6 +25,7 @@ const oauthStateStore = new Map();
 const SESSION_COOKIE_NAME = "fiken_session";
 
 app.use(express.json());
+app.set("trust proxy", true);
 app.use(express.static(path.join(__dirname, "public")));
 
 function formatDate(date) {
