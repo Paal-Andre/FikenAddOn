@@ -10,6 +10,8 @@
 			href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
 			rel="stylesheet"
 		/>
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<meta name="theme-color" content="#f3f4f8" />
 		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
@@ -21,10 +23,12 @@
 					<p class="subtitle">Inneværende periode med sammenligning mot forrige periode.</p>
 				</div>
 				<div class="actions">
-					<a id="login-link" class="button button-secondary" href="/auth/login">Koble til Fiken</a>
+					<button id="install-app-btn" class="button button-secondary install-app-btn" type="button">Legg på hjemskjerm</button>
+					<a id="login-link" class="button button-secondary" href="/auth.html">Autentiser</a>
 					<a id="logout-link" class="button button-ghost" href="/auth/logout">Logg ut</a>
 				</div>
 			</header>
+			<p id="install-help" class="install-help" aria-live="polite"></p>
 
 			<section class="controls card">
 				<div class="field">
@@ -78,6 +82,7 @@
 		</template>
 
 		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+		<script src="pwa-install.js" defer></script>
 		<script src="app.js" defer></script>
 	</body>
 </html>

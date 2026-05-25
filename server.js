@@ -185,8 +185,9 @@ function isExpired(tokens) {
 }
 
 async function refreshAccessToken(tokens) {
-	if (!CLIENT_ID || !CLIENT_SECRET) {
-		throw new Error("Mangler FIKEN_CLIENT_ID eller FIKEN_CLIENT_SECRET i miljøvariabler.");
+	const oauthClient = tokens?.oauthClient;
+	if (!oauthClient?.clientId || !oauthClient?.clientSecret) {
+		throw new Error("Mangler OAuth client id/client secret for sesjonen. Registrer egne nøkler først.");
 	}
 
 	if (!tokens?.refreshToken) {
@@ -200,13 +201,14 @@ async function refreshAccessToken(tokens) {
 
 	const response = await axios.post(FIKEN_OAUTH_TOKEN_URL, body.toString(), {
 		headers: {
-			Authorization: `Basic ${encodeBasicAuth(CLIENT_ID, CLIENT_SECRET)}`,
+			Authorization: `Basic ${encodeBasicAuth(oauthClient.clientId, oauthClient.clientSecret)}`,
 			"Content-Type": "application/x-www-form-urlencoded",
 		},
 		timeout: 15000,
 	});
 
 	const refreshed = {
+		oauthClient,
 		accessToken: response.data.access_token,
 		refreshToken: response.data.refresh_token || tokens.refreshToken,
 		expiresIn: response.data.expires_in,
@@ -513,13 +515,15 @@ async function buildSummary(period, requestedCompanySlug, sessionId) {
 	};
 }
 
-app.get("/auth/login", (req, res) => {
-	if (!CLIENT_ID || !CLIENT_SECRET) {
-		res.status(500).send("Mangler FIKEN_CLIENT_ID/FIKEN_CLIENT_SECRET i .env.");
+app.get("/auth/login", async (req, res) => {
+	const sessionId = getOrCreateSessionId(req, res);
+	const sessionData = await readSessionTokens(sessionId);
+	const oauthClient = sessionData?.oauthClient;
+
+	if (!oauthClient?.clientId || !oauthClient?.clientSecret) {
+		res.status(400).send("Mangler egne Fiken OAuth-nokler i sesjonen. Legg inn client id/secret i appen forst.");
 		return;
 	}
-
-	const sessionId = getOrCreateSessionId(req, res);
 
 	const state = crypto.randomUUID();
 	oauthStateStore.set(state, {
@@ -529,7 +533,7 @@ app.get("/auth/login", (req, res) => {
 
 	const params = new URLSearchParams({
 		response_type: "code",
-		client_id: CLIENT_ID,
+		client_id: oauthClient.clientId,
 		redirect_uri: REDIRECT_URI,
 		state,
 	});
@@ -559,8 +563,10 @@ app.get("/auth/callback", async (req, res) => {
 	}
 	setSessionCookie(res, sessionId);
 
-	if (!CLIENT_ID || !CLIENT_SECRET) {
-		res.status(400).send("Mangler FIKEN_CLIENT_ID/FIKEN_CLIENT_SECRET i .env.");
+	const existingSessionData = await readSessionTokens(sessionId);
+	const oauthClient = existingSessionData?.oauthClient;
+	if (!oauthClient?.clientId || !oauthClient?.clientSecret) {
+		res.status(400).send("Mangler OAuth client id/client secret i sesjonen.");
 		return;
 	}
 
@@ -574,13 +580,14 @@ app.get("/auth/callback", async (req, res) => {
 
 		const response = await axios.post(FIKEN_OAUTH_TOKEN_URL, body.toString(), {
 			headers: {
-				Authorization: `Basic ${encodeBasicAuth(CLIENT_ID, CLIENT_SECRET)}`,
+				Authorization: `Basic ${encodeBasicAuth(oauthClient.clientId, oauthClient.clientSecret)}`,
 				"Content-Type": "application/x-www-form-urlencoded",
 			},
 			timeout: 15000,
 		});
 
 		const tokenPayload = {
+			oauthClient,
 			accessToken: response.data.access_token,
 			refreshToken: response.data.refresh_token,
 			expiresIn: response.data.expires_in,
@@ -603,12 +610,35 @@ app.get("/auth/logout", async (req, res) => {
 	res.redirect("/");
 });
 
+app.post("/api/oauth-client", async (req, res) => {
+	const sessionId = getOrCreateSessionId(req, res);
+	const clientId = String(req.body?.clientId || "").trim();
+	const clientSecret = String(req.body?.clientSecret || "").trim();
+
+	if (!clientId || !clientSecret) {
+		res.status(400).json({ error: "Mangler clientId eller clientSecret." });
+		return;
+	}
+
+	const existing = (await readSessionTokens(sessionId)) || {};
+	await writeSessionTokens(sessionId, {
+		...existing,
+		oauthClient: {
+			clientId,
+			clientSecret,
+		},
+	});
+
+	res.json({ ok: true });
+});
+
 app.get("/api/status", async (req, res) => {
 	const sessionId = getOrCreateSessionId(req, res);
+	const sessionData = await readSessionTokens(sessionId);
 	const accessToken = await getValidAccessToken(sessionId);
 	res.json({
 		authorized: Boolean(accessToken),
-		hasConfiguredOAuthClient: Boolean(CLIENT_ID && CLIENT_SECRET),
+		hasConfiguredOAuthClient: Boolean(sessionData?.oauthClient?.clientId && sessionData?.oauthClient?.clientSecret),
 		companySlug: COMPANY_SLUG_ENV || null,
 	});
 });

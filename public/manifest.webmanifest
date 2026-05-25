@@ -1,0 +1,18 @@
+{
+	"name": "Fiken Add On",
+	"short_name": "Fiken AddOn",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"background_color": "#f3f4f8",
+	"theme_color": "#f3f4f8",
+	"description": "Dashboard for konsulentinntekt fra Fiken.",
+	"icons": [
+		{
+			"src": "/icon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "any"
+		}
+	]
+}

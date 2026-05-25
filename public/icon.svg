@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fiken Add On">
+  <rect width="512" height="512" rx="96" fill="#f3f4f8" />
+  <rect x="80" y="80" width="352" height="352" rx="56" fill="#5a3fd6" />
+  <path d="M160 184h192v40H208v56h128v40H208v96h-48V184z" fill="#fff" />
+</svg>

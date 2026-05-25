@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="no">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Autentiser mot Fiken</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<meta name="theme-color" content="#f3f4f8" />
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<main class="container auth-shell">
+			<section class="card auth-card">
+				<p class="eyebrow">Fiken API</p>
+				<h1>Autentiser mot Fiken</h1>
+				<p class="subtitle">Legg inn client id og client secret fra din egen Fiken app for å koble denne sesjonen.</p>
+
+				<div class="field auth-field">
+					<label for="client-id-input">Fiken Client ID</label>
+					<input id="client-id-input" type="text" autocomplete="off" placeholder="Lim inn din client id" />
+				</div>
+
+				<div class="field auth-field">
+					<label for="client-secret-input">Fiken Client Secret</label>
+					<input id="client-secret-input" type="password" autocomplete="off" placeholder="Lim inn din client secret" />
+				</div>
+
+				<section id="message" class="message"></section>
+				<p id="install-help" class="install-help" aria-live="polite"></p>
+
+				<div class="actions auth-actions">
+					<button id="install-app-btn" class="button button-secondary install-app-btn" type="button">Legg på hjemskjerm</button>
+					<button id="save-btn" class="button button-secondary" type="button">Lagre nøkler</button>
+					<button id="connect-btn" class="button button-primary" type="button">Lagre og koble til Fiken</button>
+					<a class="button button-ghost" href="/">Til dashboard</a>
+				</div>
+			</section>
+		</main>
+
+		<script src="pwa-install.js" defer></script>
+		<script src="auth.js" defer></script>
+	</body>
+</html>

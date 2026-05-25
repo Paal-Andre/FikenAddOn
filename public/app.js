@@ -234,7 +234,7 @@ async function bootstrap() {
 		setAuthUi(status.authorized);
 
 		if (!status.authorized) {
-			showMessage("Ikke autentisert mot Fiken. Trykk Koble til Fiken for å logge inn.");
+			window.location.href = "/auth.html?return=%2F";
 			return;
 		}
 
